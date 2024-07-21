@@ -10,7 +10,7 @@ var (
     lastPingStatus string
 )
 
-func main() {
+func init() {
 	url := "https://zmt3q4-8080.csb.app/health" 
 
 	
@@ -44,4 +44,9 @@ func main() {
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Server is running. Last ping status: %s\n", lastPingStatus)
+}
+
+func main() {
+	http.HandleFunc("/", Handler)
+	http.ListenAndServe(":3000", nil)
 }
