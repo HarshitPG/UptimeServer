@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+var (
+    lastPingStatus string
+)
+
 func main() {
 	url := "https://zmt3q4-8080.csb.app/health" 
 
@@ -13,10 +17,12 @@ func main() {
 	pingURL := func() {
 		resp, err := http.Get(url)
 		if err != nil {
+			lastPingStatus = fmt.Sprintf("Error pinging URL: %s", err)
 			fmt.Printf("Error pinging URL: %s\n", err)
 			return
 		}
 		defer resp.Body.Close()
+		lastPingStatus = fmt.Sprintf("Pinged %s - Status Code: %d", url, resp.StatusCode)
 		fmt.Printf("Pinged %s - Status Code: %d\n", url, resp.StatusCode)
 	}
 
@@ -34,19 +40,8 @@ func main() {
             }
         }
 	}() 
+}
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Go server is running!")
-	})
-
-	
-	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Server is up and running! Pinging URL: %s", url)
-	})
-
-
-	fmt.Println("Starting server on :8080")
-    if err := http.ListenAndServe(":8080", nil); err != nil {
-        fmt.Printf("Error starting server: %s\n", err)
-    }
+func Handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Server is running. Last ping status: %s\n", lastPingStatus)
 }
