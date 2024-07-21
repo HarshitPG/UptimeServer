@@ -4,13 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/labstack/echo/v4"
 )
 
-var (
-	lastPingStatus string
-)
+var lastPingStatus string
 
 func pingURL(url string) {
 	resp, err := http.Get(url)
@@ -39,22 +35,21 @@ func startPing(url string) {
 	}()
 }
 
-func main() {
+func statusHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/status" {
+		http.NotFound(w, r)
+		return
+	}
+	fmt.Fprintf(w, "Server is running. Last ping status: %s\n", lastPingStatus)
+}
+
+func Handler() {
 	url := "https://zmt3q4-8080.csb.app/health"
 	startPing(url)
 
-	e := echo.New()
-	e.GET("/status", func(c echo.Context) error {
-		return c.String(http.StatusOK, fmt.Sprintf("Server is running. Last ping status: %s\n", lastPingStatus))
-	})
-
-	e.Logger.Fatal(e.Start(":3000"))
-}
-
-func Handler(w http.ResponseWriter, r *http.Request) {
-	e := echo.New()
-	e.GET("/status", func(c echo.Context) error {
-		return c.String(http.StatusOK, fmt.Sprintf("Server is running. Last ping status: %s\n", lastPingStatus))
-	})
-	e.ServeHTTP(w, r)
+	http.HandleFunc("/status", statusHandler)
+	fmt.Println("Server is starting...")
+	if err := http.ListenAndServe(":3000", nil); err != nil {
+		fmt.Printf("Error starting server: %s\n", err)
+	}
 }
